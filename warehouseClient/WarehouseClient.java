@@ -7,7 +7,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 public class WarehouseClient {
-	static void setStoreData(String trustStorePath, String trustStorePassword, String keyStorePath, String keyStorePassword) {
+	private static void setStoreData(String trustStorePath, String trustStorePassword, String keyStorePath, String keyStorePassword) {
 		System.setProperty("javax.net.ssl.trustStore", trustStorePath);
 		System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
 		System.setProperty("javax.net.ssl.keyStore", keyStorePath);
