@@ -6,7 +6,8 @@ public class NotificationProtocolUnit {
 		downloaded,
 		downloadError,
 		downloadDeleted,
-		serviceMessage
+		serviceMessage,
+		rpcResult
 	};
 	
 	public UnitType type;

@@ -114,17 +114,33 @@ public class NotificationProtocolClient {
 			NotificationProtocolUnit unit = mapper.readValue(unitString, NotificationProtocolUnit.class);
 			JsonNode root = mapper.readValue(unitString, JsonNode.class);
 			JsonNode content = root.path("content");
-			JsonParser tokens = mapper.treeAsTokens(content);
+			JsonParser parser = content.traverse();
+			
+			ReleaseData releaseData;
+			
 			switch(unit.type) {
 			case queued:
+				releaseData = mapper.readValue(parser, ReleaseData.class);
 				break;
+				
 			case downloaded:
+				releaseData = mapper.readValue(parser, ReleaseData.class);
 				break;
+				
 			case downloadError:
+				DownloadError downloadError = mapper.readValue(parser, DownloadError.class);
 				break;
+				
 			case downloadDeleted:
+				releaseData = mapper.readValue(parser, ReleaseData.class);
 				break;
+				
 			case serviceMessage:
+				ServiceMessage serviceMessage = mapper.readValue(parser, ServiceMessage.class);
+				break;
+				
+			case rpcResult:
+				RemoteProcedureCallResult rpcResult = mapper.readValue(parser, RemoteProcedureCallResult.class);
 				break;
 			}
 		}
