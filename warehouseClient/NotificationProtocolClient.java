@@ -9,6 +9,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
 
 public class NotificationProtocolClient {
@@ -113,6 +114,7 @@ public class NotificationProtocolClient {
 			NotificationProtocolUnit unit = mapper.readValue(unitString, NotificationProtocolUnit.class);
 			JsonNode root = mapper.readValue(unitString, JsonNode.class);
 			JsonNode content = root.path("content");
+			JsonParser tokens = mapper.treeAsTokens(content);
 			switch(unit.type) {
 			case queued:
 				break;
