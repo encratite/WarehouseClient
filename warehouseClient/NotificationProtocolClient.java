@@ -3,11 +3,15 @@ package warehouseClient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
+import org.codehaus.jackson.JsonGenerationException;
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -27,6 +31,8 @@ public class NotificationProtocolClient {
 	private int port;
 	
 	private ObjectMapper mapper;
+	
+	private int rpcId;
 	
 	class NotificationError extends Exception {
 		public NotificationError() {
@@ -50,6 +56,7 @@ public class NotificationProtocolClient {
 		inputStream = socket.getInputStream();
 		outputStream = socket.getOutputStream();
 		buffer = "";
+		rpcId = 1;
 	}
 	
 	private String readData() throws NotificationError {
@@ -147,6 +154,31 @@ public class NotificationProtocolClient {
 		catch(Exception exception) {
 			throw criticalError("Unable to process JSON data sent by the server: " + exception.getMessage());
 		}
+	}
+	
+	private void sendData(String input) throws IOException {
+		String packet = Integer.toString(input.length()) + ":" + input;
+		outputStream.write(packet.getBytes());
+	}
+	
+	private void sendRPCData(String function, ArrayList<Object> arguments) throws NotificationError, IOException {
+		Map<String, Object> content = new HashMap<String, Object>();
+		content.put("id", rpcId);
+		content.put("method", function);
+		content.put("params", arguments);
+		
+		Map<String, Object> unit = new HashMap<String, Object>();
+		unit.put("type", "rpc");
+		unit.put("content", content);
+		
+		try {
+			mapper.writeValue(outputStream, unit);
+		}
+		catch(JsonGenerationException exception) {
+			throw criticalError("Unable to serialise RPC arguments");
+		}
+		
+		rpcId++;
 	}
 	
 	private NotificationError criticalError(String message) {
