@@ -2,10 +2,6 @@ package warehouseClient;
 
 import java.io.IOException;
 
-import javax.net.SocketFactory;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-
 public class WarehouseClient {
 	private static void setStoreData(String trustStorePath, String trustStorePassword, String keyStorePath, String keyStorePassword) {
 		System.setProperty("javax.net.ssl.trustStore", trustStorePath);

@@ -3,8 +3,8 @@ package warehouseClient;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.net.SocketFactory;
@@ -33,6 +33,7 @@ public class NotificationProtocolClient {
 	private ObjectMapper mapper;
 	
 	private int rpcId;
+	private Map<Integer, RemoteProcedureCallHandler> rpcHandlers; 
 	
 	class NotificationError extends Exception {
 		public NotificationError() {
@@ -47,6 +48,7 @@ public class NotificationProtocolClient {
 	public NotificationProtocolClient(String serverAddress, int serverPort) {
 		byteBuffer = new byte[byteBufferSize];
 		mapper = new ObjectMapper();
+		rpcHandlers = new HashMap<Integer, RemoteProcedureCallHandler>();
 	}
 	
 	public void connect() throws IOException {
@@ -148,6 +150,11 @@ public class NotificationProtocolClient {
 				
 			case rpcResult:
 				RemoteProcedureCallResult rpcResult = mapper.readValue(parser, RemoteProcedureCallResult.class);
+				int id = rpcResult.id;
+				if(!rpcHandlers.containsKey(id))
+					throw criticalError("The server provided an invalid RPC result ID: " + Integer.toString(id));
+				RemoteProcedureCallHandler handler = rpcHandlers.get(id);
+				handler.receiveResult(rpcResult.result);
 				break;
 			}
 		}
@@ -161,7 +168,7 @@ public class NotificationProtocolClient {
 		outputStream.write(packet.getBytes());
 	}
 	
-	private void sendRPCData(String function, ArrayList<Object> arguments) throws NotificationError, IOException {
+	public void sendRPCData(String function, List<Object> arguments) throws NotificationError, IOException {
 		Map<String, Object> content = new HashMap<String, Object>();
 		content.put("id", rpcId);
 		content.put("method", function);
