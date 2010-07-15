@@ -26,6 +26,7 @@ public class Configuration {
 		keyStorePassword = properties.getProperty("keyStorePassword");
 		
 		notificationServerAddress = properties.getProperty("notificationServerAddress");
-		notificationServerPort = Integer.getInteger(properties.getProperty("notificationServerPort"));
+		String portString = properties.getProperty("notificationServerPort");
+		notificationServerPort = Integer.parseInt(portString);
 	}
 }

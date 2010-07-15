@@ -45,7 +45,12 @@ public class NotificationProtocolClient {
 		}
 	}
 	
+	public NotificationProtocolClient() {
+	}
+	
 	public NotificationProtocolClient(String serverAddress, int serverPort) {
+		address = serverAddress;
+		port = serverPort;
 		byteBuffer = new byte[byteBufferSize];
 		mapper = new ObjectMapper();
 		rpcHandlers = new HashMap<Integer, RemoteProcedureCallHandler>();
@@ -64,7 +69,9 @@ public class NotificationProtocolClient {
 	private String readData() throws NotificationError {
 		try {
 			while(true) {
+				System.out.println("Reading...");
 				int bytesRead = inputStream.read(byteBuffer);
+				System.out.println("Read " + bytesRead + " bytes");
 				String newData = new String(byteBuffer, 0, bytesRead);
 				buffer.concat(newData);
 				if(buffer.length() >= bufferLimit)
@@ -117,7 +124,7 @@ public class NotificationProtocolClient {
 		}
 	}
 	
-	private void processUnit() throws NotificationError {
+	public void processUnit() throws NotificationError {
 		String unitString = readData();
 		try {
 			NotificationProtocolUnit unit = mapper.readValue(unitString, NotificationProtocolUnit.class);
@@ -161,6 +168,21 @@ public class NotificationProtocolClient {
 		catch(Exception exception) {
 			throw criticalError("Unable to process JSON data sent by the server: " + exception.getMessage());
 		}
+	}
+	
+	protected void queuedRelease(ReleaseData releaseData) {
+	}
+	
+	protected void downloadedRelease(ReleaseData releaseData) {
+	}
+	
+	protected void downloadError(DownloadError downloadError) {
+	}
+	
+	protected void downloadDeleted(ReleaseData releaseData) {
+	}
+	
+	protected void serviceMessage(ServiceMessage serviceMessage) {
 	}
 	
 	private void sendData(String input) throws IOException {

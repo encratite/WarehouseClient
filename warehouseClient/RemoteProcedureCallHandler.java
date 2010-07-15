@@ -25,15 +25,11 @@ public class RemoteProcedureCallHandler {
 		client = newClient;
 	}
 	
-	public Object call(List<Object> arguments) throws IOException, NotificationError {
-		try {
-			client.sendRPCData(method, arguments);
-			//wait for the notification in receiveResult which the object receives frm its NotificationProtocolClient
-			wait();
-			return rpcResult;
-		}
-		catch(InterruptedException exception) {
-		}
+	public Object call(List<Object> arguments) throws IOException, NotificationError, InterruptedException {
+		client.sendRPCData(method, arguments);
+		//wait for the notification in receiveResult which the object receives from its NotificationProtocolClient
+		wait();
+		return rpcResult;
 	}
 	
 	public void receiveResult(Object result) {

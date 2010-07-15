@@ -10,6 +10,26 @@ public class WarehouseClient {
 		System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
 	}
 	
+	private static void runTest(Configuration configuration) {
+		NotificationTest test = new NotificationTest(configuration.notificationServerAddress, configuration.notificationServerPort);
+		try {
+			test.connect();
+		}
+		catch(IOException exception) {
+			System.out.println("Failed to connect: " + exception.getMessage());
+			System.exit(1);
+		}
+		while(true) {
+			try {
+				test.processUnit();
+			}
+			catch(NotificationProtocolClient.NotificationError exception) {
+				System.out.println("A notification client exception occured: " + exception.getMessage());
+				System.exit(2);
+			}
+		}
+	}
+	
 	public static void main(String[] arguments) {
 		try {
 			Configuration configuration = new Configuration("warehouseClient.properties");
@@ -19,6 +39,7 @@ public class WarehouseClient {
 				configuration.keyStorePath,
 				configuration.keyStorePassword
 			);
+			runTest(configuration);
 		}
 		catch(IOException exception) {
 			exception.printStackTrace();
