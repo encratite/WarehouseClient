@@ -161,7 +161,8 @@ public class NotificationProtocolClient {
 				if(!rpcHandlers.containsKey(id))
 					throw criticalError("The server provided an invalid RPC result ID: " + Integer.toString(id));
 				RemoteProcedureCallHandler handler = rpcHandlers.get(id);
-				handler.receiveResult(rpcResult.result);
+				handler.rpcResult = rpcResult.result;
+				handler.notify();
 				break;
 			}
 		}

@@ -8,7 +8,8 @@ import warehouseClient.NotificationProtocolClient.NotificationError;
 public class RemoteProcedureCallHandler {
 	private String method;
 	private NotificationProtocolClient client;
-	private Object rpcResult;
+	public Object rpcResult;
+	private List<Object> arguments;
 	
 	public class RemoteProcedureCallException extends Exception {
 		public RemoteProcedureCallException() {
@@ -25,15 +26,13 @@ public class RemoteProcedureCallHandler {
 		client = newClient;
 	}
 	
-	public Object call(List<Object> arguments) throws IOException, NotificationError, InterruptedException {
-		client.sendRPCData(method, arguments);
+	public Object call(List<Object> newArguments) throws IOException, NotificationError, InterruptedException {
+		client.sendRPCData(method, newArguments);
 		//wait for the notification in receiveResult which the object receives from its NotificationProtocolClient
-		wait();
+		//System.out.println("Waiting");
+		synchronized(this) {
+			wait();
+		}
 		return rpcResult;
-	}
-	
-	public void receiveResult(Object result) {
-		rpcResult = result;
-		notify();
 	}
 }
