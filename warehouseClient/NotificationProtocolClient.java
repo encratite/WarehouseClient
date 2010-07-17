@@ -1,5 +1,6 @@
 package warehouseClient;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -71,9 +72,9 @@ public class NotificationProtocolClient {
 			while(true) {
 				System.out.println("Reading...");
 				int bytesRead = inputStream.read(byteBuffer);
-				System.out.println("Read " + bytesRead + " bytes");
 				String newData = new String(byteBuffer, 0, bytesRead);
-				buffer.concat(newData);
+				System.out.println("Read " + bytesRead + " bytes:\n" + newData);
+				buffer = buffer.concat(newData);
 				if(buffer.length() >= bufferLimit)
 					throw new NotificationError("The buffer has exceeded the limit");
 				//check for the separator
@@ -102,7 +103,7 @@ public class NotificationProtocolClient {
 					newData = new String(byteBuffer, 0, bytesRead);
 					buffer.concat(newData);
 				}
-				String unit = buffer.substring(0, unitSize - 1);
+				String unit = buffer.substring(0, unitSize);
 				//remove the unit from the buffer
 				buffer = buffer.substring(unitSize);
 				return unit;
@@ -129,8 +130,8 @@ public class NotificationProtocolClient {
 		try {
 			NotificationProtocolUnit unit = mapper.readValue(unitString, NotificationProtocolUnit.class);
 			JsonNode root = mapper.readValue(unitString, JsonNode.class);
-			JsonNode content = root.path("content");
-			JsonParser parser = content.traverse();
+			JsonNode data = root.path("data");
+			JsonParser parser = data.traverse();
 			
 			ReleaseData releaseData;
 			
@@ -161,8 +162,15 @@ public class NotificationProtocolClient {
 				if(!rpcHandlers.containsKey(id))
 					throw criticalError("The server provided an invalid RPC result ID: " + Integer.toString(id));
 				RemoteProcedureCallHandler handler = rpcHandlers.get(id);
-				handler.rpcResult = rpcResult.result;
-				handler.notify();
+				handler.receiveResult(rpcResult.result);
+				//remove the handler from the RPC ID -> handler map
+				rpcHandlers.remove(id);
+				break;
+				
+			case error:
+				String message = data.toString();
+				System.out.println("A protocol error occured: " + message);
+				System.exit(1);
 				break;
 			}
 		}
@@ -191,18 +199,31 @@ public class NotificationProtocolClient {
 		outputStream.write(packet.getBytes());
 	}
 	
-	public void sendRPCData(String function, List<Object> arguments) throws NotificationError, IOException {
+	public void performRPC(RemoteProcedureCallHandler handler, List<Object> arguments) throws NotificationError, IOException {
+		//add the handler to the RPC handlers map so it can be matched using the ID in processUnit
+		rpcHandlers.put(rpcId, handler);
+		
 		Map<String, Object> content = new HashMap<String, Object>();
 		content.put("id", rpcId);
-		content.put("method", function);
+		content.put("method", handler.getMethod());
 		content.put("params", arguments);
 		
 		Map<String, Object> unit = new HashMap<String, Object>();
 		unit.put("type", "rpc");
-		unit.put("content", content);
+		unit.put("data", content);
 		
 		try {
-			mapper.writeValue(outputStream, unit);
+			ByteArrayOutputStream rpcDataStream = new ByteArrayOutputStream();
+			mapper.writeValue(rpcDataStream, unit);
+			ByteArrayOutputStream packetStream = new ByteArrayOutputStream();
+			String lengthPrefix = Integer.toString(rpcDataStream.size()) + ":";
+			packetStream.write(lengthPrefix.getBytes());
+			packetStream.write(rpcDataStream.toByteArray());
+			byte[] output = packetStream.toByteArray();
+			System.out.println("Writing " + output.length + " bytes:");
+			System.out.write(output);
+			System.out.print('\n');
+			outputStream.write(output);
 		}
 		catch(JsonGenerationException exception) {
 			throw criticalError("Unable to serialise RPC arguments");

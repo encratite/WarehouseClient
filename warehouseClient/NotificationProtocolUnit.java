@@ -7,12 +7,18 @@ public class NotificationProtocolUnit {
 		downloadError,
 		downloadDeleted,
 		serviceMessage,
-		rpcResult
+		rpcResult,
+		error
 	};
 	
 	public UnitType type;
+	public Object data;
 	
 	public void setType(UnitType newType) {
 		type = newType;
+	}
+	
+	public void setData(Object newData) {
+		data = newData;
 	}
 }
