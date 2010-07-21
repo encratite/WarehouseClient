@@ -2,6 +2,7 @@ package warehouseClient;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 
 public class WarehouseClient implements Runnable {
 	private NotificationTest test;
@@ -25,9 +26,12 @@ public class WarehouseClient implements Runnable {
 		Thread clientThread = new Thread(this, "NotificationClientThread");
 		clientThread.start();
 		try {
-			RemoteProcedureCallHandler getNotificationCount = new RemoteProcedureCallHandler("getNotificationCount", test);
-			int count = (Integer)getNotificationCount.call(new ArrayList<Object>());
+			RemoteProcedureCallHandler<Integer> getNotificationCount = new RemoteProcedureCallHandler<Integer>("getNotificationCount", test, Integer.class);
+			RemoteProcedureCallHandler<ArrayList> getOldNotifications = new RemoteProcedureCallHandler<ArrayList>("getOldNotifications", test, ArrayList.class);
+			int count = getNotificationCount.call();
 			System.out.println("Number of messages: " + count);
+			ArrayList<LinkedHashMap> notifications = (ArrayList<LinkedHashMap>)getOldNotifications.call(0, Math.max(count - 1, 0));
+			System.out.println("getOldNotifications: " + notifications.get(0).getClass().toString());
 		}
 		catch(InterruptedException exception) {
 			System.out.println("Interrupted");
@@ -36,7 +40,13 @@ public class WarehouseClient implements Runnable {
 			System.out.println("An IO exception occured: " + exception.getMessage());
 		}
 		catch(NotificationProtocolClient.NotificationError exception) {
+			System.out.println("An notification error occured: " + exception.getMessage());
+		}
+		catch(RemoteProcedureCallException exception) {
 			System.out.println("An RPC exception occured: " + exception.getMessage());
+		}
+		catch(ClassCastException exception) {
+			System.out.println("The server returned invalid data which could not be interpreted: " + exception.getMessage());
 		}
 	}
 	

@@ -67,13 +67,17 @@ public class NotificationProtocolClient {
 		rpcId = 1;
 	}
 	
+	private void printReadData(String data) {
+		System.out.println("Read " + data.length() + " bytes:\n" + data);
+	}
+	
 	private String readData() throws NotificationError {
 		try {
 			while(true) {
 				System.out.println("Reading...");
 				int bytesRead = inputStream.read(byteBuffer);
 				String newData = new String(byteBuffer, 0, bytesRead);
-				System.out.println("Read " + bytesRead + " bytes:\n" + newData);
+				printReadData(newData);
 				buffer = buffer.concat(newData);
 				if(buffer.length() >= bufferLimit)
 					throw new NotificationError("The buffer has exceeded the limit");
@@ -101,7 +105,8 @@ public class NotificationProtocolClient {
 					//need to keep on reading until we have enough data
 					bytesRead = inputStream.read(byteBuffer);
 					newData = new String(byteBuffer, 0, bytesRead);
-					buffer.concat(newData);
+					printReadData(newData);
+					buffer = buffer.concat(newData);
 				}
 				String unit = buffer.substring(0, unitSize);
 				//remove the unit from the buffer
@@ -199,7 +204,7 @@ public class NotificationProtocolClient {
 		outputStream.write(packet.getBytes());
 	}
 	
-	public void performRPC(RemoteProcedureCallHandler handler, List<Object> arguments) throws NotificationError, IOException {
+	public void performRPC(RemoteProcedureCallHandler handler, Object[] arguments) throws NotificationError, IOException {
 		//add the handler to the RPC handlers map so it can be matched using the ID in processUnit
 		rpcHandlers.put(rpcId, handler);
 		
