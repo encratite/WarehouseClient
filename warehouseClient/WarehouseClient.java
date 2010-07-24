@@ -31,7 +31,19 @@ public class WarehouseClient implements Runnable {
 			int count = getNotificationCount.call();
 			System.out.println("Number of messages: " + count);
 			ArrayList<LinkedHashMap> notifications = (ArrayList<LinkedHashMap>)getOldNotifications.call(0, Math.max(count - 1, 0));
-			System.out.println("getOldNotifications: " + notifications.get(0).getClass().toString());
+			//System.out.println("getOldNotifications: " + notifications.get(0).getClass().toString());
+			for(LinkedHashMap<String, Object> map : notifications) {
+				try {
+					ReleaseData releaseData = new ReleaseData(map);
+					System.out.println(releaseData.name);
+				}
+				catch(NullPointerException exception) {
+					for(String key : map.keySet()) {
+						System.out.println("Key: " + key);
+					}
+					System.exit(1);
+				}
+			}
 		}
 		catch(InterruptedException exception) {
 			System.out.println("Interrupted");

@@ -1,14 +1,16 @@
 package warehouseClient;
 
 import java.io.IOException;
-import java.util.List;
+
+import org.codehaus.jackson.JsonNode;
 
 import warehouseClient.NotificationProtocolClient.NotificationError;
 
 public class RemoteProcedureCallHandler<ReturnType> {
 	private String method;
 	private NotificationProtocolClient client;
-	public Object rpcResult;
+	private Object result;
+	private JsonNode resultNode;
 	private Object[] arguments;
 	private Class<ReturnType> returnTypeClass;
 	
@@ -22,18 +24,23 @@ public class RemoteProcedureCallHandler<ReturnType> {
 		client.performRPC(this, newArguments);
 		//wait for the notification in receiveResult which the object receives from its NotificationProtocolClient
 		wait();
-		Class resultClass = rpcResult.getClass();
+		Class resultClass = result.getClass();
 		if(!resultClass.equals(returnTypeClass))
 			throw new RemoteProcedureCallException("The server returned an invalid class: " + resultClass.toString() + " (expected " + returnTypeClass.toString() + ")");
-		return (ReturnType)rpcResult;
+		return (ReturnType)result;
 	}
 	
-	public synchronized void receiveResult(Object newRpcResult) {
-		rpcResult = newRpcResult;
+	public synchronized void receiveResult(Object newRpcResult, JsonNode newResultNode) {
+		result = newRpcResult;
+		resultNode = newResultNode;
 		notify();
 	}
 	
 	public String getMethod() {
 		return method;
+	}
+	
+	public JsonNode node() {
+		return resultNode;
 	}
 }
