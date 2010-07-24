@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import javax.net.SocketFactory;
@@ -138,37 +137,14 @@ public class NotificationProtocolClient {
 			JsonNode data = root.path("data");
 			JsonParser parser = data.traverse();
 			
-			ReleaseData releaseData;
-			
 			switch(unit.type) {
-			case queued:
-				releaseData = mapper.readValue(parser, ReleaseData.class);
-				break;
-				
-			case downloaded:
-				releaseData = mapper.readValue(parser, ReleaseData.class);
-				break;
-				
-			case downloadError:
-				DownloadError downloadError = mapper.readValue(parser, DownloadError.class);
-				break;
-				
-			case downloadDeleted:
-				releaseData = mapper.readValue(parser, ReleaseData.class);
-				break;
-				
-			case serviceMessage:
-				ServiceMessage serviceMessage = mapper.readValue(parser, ServiceMessage.class);
-				break;
-				
 			case rpcResult:
 				RemoteProcedureCallResult rpcResult = mapper.readValue(parser, RemoteProcedureCallResult.class);
 				int id = rpcResult.id;
 				if(!rpcHandlers.containsKey(id))
 					throw criticalError("The server provided an invalid RPC result ID: " + Integer.toString(id));
 				RemoteProcedureCallHandler handler = rpcHandlers.get(id);
-				JsonNode resultNode = data.path("result");
-				handler.receiveResult(rpcResult.result, resultNode);
+				handler.receiveResult(rpcResult.result, data.get("result"));
 				//remove the handler from the RPC ID -> handler map
 				rpcHandlers.remove(id);
 				break;

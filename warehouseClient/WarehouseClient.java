@@ -1,8 +1,11 @@
 package warehouseClient;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+
+import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
 
 public class WarehouseClient implements Runnable {
 	private NotificationTest test;
@@ -12,6 +15,15 @@ public class WarehouseClient implements Runnable {
 		System.setProperty("javax.net.ssl.trustStorePassword", trustStorePassword);
 		System.setProperty("javax.net.ssl.keyStore", keyStorePath);
 		System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
+	}
+	
+	private void processOldNotifications(JsonNode input) throws IOException, JsonMappingException, JsonParseException {
+		ObjectMapper mapper = new ObjectMapper();
+		for(JsonNode node : input) {
+			NotificationData unit = mapper.readValue(node.traverse(), NotificationData.class);
+			unit.initialise(node);
+			System.out.println(unit.description);
+		}
 	}
 	
 	private void runTest(Configuration configuration) {
@@ -26,24 +38,14 @@ public class WarehouseClient implements Runnable {
 		Thread clientThread = new Thread(this, "NotificationClientThread");
 		clientThread.start();
 		try {
-			RemoteProcedureCallHandler<Integer> getNotificationCount = new RemoteProcedureCallHandler<Integer>("getNotificationCount", test, Integer.class);
-			RemoteProcedureCallHandler<ArrayList> getOldNotifications = new RemoteProcedureCallHandler<ArrayList>("getOldNotifications", test, ArrayList.class);
-			int count = getNotificationCount.call();
+			RemoteProcedureCallHandler
+				getNotificationCount = new RemoteProcedureCallHandler("getNotificationCount", test),
+				getOldNotifications = new RemoteProcedureCallHandler("getOldNotifications", test);
+			int count = (Integer)getNotificationCount.call();
 			System.out.println("Number of messages: " + count);
-			ArrayList<LinkedHashMap> notifications = (ArrayList<LinkedHashMap>)getOldNotifications.call(0, Math.max(count - 1, 0));
-			//System.out.println("getOldNotifications: " + notifications.get(0).getClass().toString());
-			for(LinkedHashMap<String, Object> map : notifications) {
-				try {
-					ReleaseData releaseData = new ReleaseData(map);
-					System.out.println(releaseData.name);
-				}
-				catch(NullPointerException exception) {
-					for(String key : map.keySet()) {
-						System.out.println("Key: " + key);
-					}
-					System.exit(1);
-				}
-			}
+			getOldNotifications.call(0, Math.max(count - 1, 0));
+			JsonNode oldNotificationsNode = getOldNotifications.node();
+			processOldNotifications(oldNotificationsNode);
 		}
 		catch(InterruptedException exception) {
 			System.out.println("Interrupted");
@@ -53,9 +55,6 @@ public class WarehouseClient implements Runnable {
 		}
 		catch(NotificationProtocolClient.NotificationError exception) {
 			System.out.println("An notification error occured: " + exception.getMessage());
-		}
-		catch(RemoteProcedureCallException exception) {
-			System.out.println("An RPC exception occured: " + exception.getMessage());
 		}
 		catch(ClassCastException exception) {
 			System.out.println("The server returned invalid data which could not be interpreted: " + exception.getMessage());

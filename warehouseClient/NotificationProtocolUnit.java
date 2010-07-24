@@ -1,24 +1,20 @@
 package warehouseClient;
 
+//this is the outer most data type of the protocol in which all the other data is wrapped 
 public class NotificationProtocolUnit {
 	public enum UnitType {
-		queued,
-		downloaded,
-		downloadError,
-		downloadDeleted,
-		serviceMessage,
+		notification,
 		rpcResult,
-		error
+		error,
 	};
 	
 	public UnitType type;
-	public Object data;
+	//the field "data" cannot be used meaningfully in this context
 	
 	public void setType(UnitType newType) {
 		type = newType;
 	}
 	
 	public void setData(Object newData) {
-		data = newData;
 	}
 }
