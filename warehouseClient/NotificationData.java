@@ -19,7 +19,7 @@ public class NotificationData {
 	
 	public String time;
 	public NotificationType type;
-	//field "content" cannot be used meaningfully in this context
+	//the field "content" can't be used meaningfully in this context
 	
 	//extended variables deduced from parsing content:
 	public ReleaseData releaseData;
@@ -28,11 +28,10 @@ public class NotificationData {
 	
 	public String description;
 	
-	public void initialise(JsonNode input) throws IOException, JsonMappingException {
+	//this function processes the data stored in the field "content" which is a string containing JSON data
+	public void initialise(JsonNode notificationDataNode) throws IOException, JsonMappingException {
 		ObjectMapper mapper = new ObjectMapper();
-		
-		JsonParser parser = input.traverse();
-		
+		JsonParser parser = notificationDataNode.get("content").traverse();
 		switch(type) {
 		case queued:
 			description = "Release queued";

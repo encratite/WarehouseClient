@@ -1,6 +1,7 @@
 package warehouseClient;
 
 import java.io.IOException;
+import java.util.Iterator;
 
 import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParseException;
@@ -20,6 +21,13 @@ public class WarehouseClient implements Runnable {
 	private void processOldNotifications(JsonNode input) throws IOException, JsonMappingException, JsonParseException {
 		ObjectMapper mapper = new ObjectMapper();
 		for(JsonNode node : input) {
+			/*
+			for(Iterator<String> i = node.getFieldNames(); i.hasNext();) {
+				String field = i.next();
+				System.out.println("Field: " + field + ": " + node.get(field).toString());
+			}
+			System.out.println(node.get("content").toString());
+			*/
 			NotificationData unit = mapper.readValue(node.traverse(), NotificationData.class);
 			unit.initialise(node);
 			System.out.println(unit.description);
