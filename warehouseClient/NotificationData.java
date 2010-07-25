@@ -1,8 +1,13 @@
 package warehouseClient;
 
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.SimpleTimeZone;
 
 import org.codehaus.jackson.JsonNode;
+import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -17,7 +22,7 @@ public class NotificationData {
 		serviceMessage,
 	};
 	
-	public String time;
+	public Date time;
 	public NotificationType type;
 	//the field "content" can't be used meaningfully in this context
 	
@@ -28,8 +33,18 @@ public class NotificationData {
 	
 	public String description;
 	
+	public NotificationData() {
+	}
+
+	public NotificationData(JsonNode notificationDataNode) throws IOException, JsonMappingException, JsonParseException {
+		ObjectMapper mapper = new ObjectMapper();
+		NotificationData data = mapper.readValue(notificationDataNode.traverse(), NotificationData.class);
+		type = data.type;
+		initialise(notificationDataNode);
+	}
+	
 	//this function processes the data stored in the field "content" which is a string containing JSON data
-	public void initialise(JsonNode notificationDataNode) throws IOException, JsonMappingException {
+	private void initialise(JsonNode notificationDataNode) throws IOException, JsonMappingException {
 		ObjectMapper mapper = new ObjectMapper();
 		JsonParser parser = notificationDataNode.get("content").traverse();
 		switch(type) {
@@ -60,8 +75,12 @@ public class NotificationData {
 		}
 	}
 	
-	public void setTime(String newTime) {
-		time = newTime;
+	public void setTime(String timeString) throws ParseException {
+		SimpleTimeZone utc = new SimpleTimeZone(0, "UTC");
+		SimpleDateFormat dateForm = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+		dateForm.setTimeZone(utc);
+		time = dateForm.parse(timeString);
+		System.out.println(timeString + " -> " + time.toString());
 	}
 	
 	public void setType(NotificationType newType) {

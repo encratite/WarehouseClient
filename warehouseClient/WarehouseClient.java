@@ -21,15 +21,7 @@ public class WarehouseClient implements Runnable {
 	private void processOldNotifications(JsonNode input) throws IOException, JsonMappingException, JsonParseException {
 		ObjectMapper mapper = new ObjectMapper();
 		for(JsonNode node : input) {
-			/*
-			for(Iterator<String> i = node.getFieldNames(); i.hasNext();) {
-				String field = i.next();
-				System.out.println("Field: " + field + ": " + node.get(field).toString());
-			}
-			System.out.println(node.get("content").toString());
-			*/
-			NotificationData unit = mapper.readValue(node.traverse(), NotificationData.class);
-			unit.initialise(node);
+			NotificationData unit = new NotificationData(node);
 			System.out.println(unit.description);
 		}
 	}

@@ -138,6 +138,10 @@ public class NotificationProtocolClient {
 			JsonParser parser = data.traverse();
 			
 			switch(unit.type) {
+			case notification:
+				NotificationData notification = new NotificationData(data);
+				break;
+				
 			case rpcResult:
 				RemoteProcedureCallResult rpcResult = mapper.readValue(parser, RemoteProcedureCallResult.class);
 				int id = rpcResult.id;
