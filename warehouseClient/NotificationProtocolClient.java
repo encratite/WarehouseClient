@@ -16,7 +16,7 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
 
-public class NotificationProtocolClient {
+public class NotificationProtocolClient implements Runnable {
 	private final int byteBufferSize = 1024;
 	private final int bufferLimit = 100 * byteBufferSize;
 	
@@ -225,5 +225,16 @@ public class NotificationProtocolClient {
 		catch(IOException exception) {
 		}
 		return new NotificationError(message);
+	}
+	
+	public void run() {
+		try {
+			while(true) {
+				processUnit();
+			}
+		}
+		catch(NotificationProtocolClient.NotificationError exception) {
+			System.out.println("A notification client exception occured: " + exception.getMessage());
+		}
 	}
 }
