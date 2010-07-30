@@ -1,4 +1,4 @@
-package warehouseClient;
+package warehouseClient.protocolUnit;
 
 import java.util.LinkedHashMap;
 

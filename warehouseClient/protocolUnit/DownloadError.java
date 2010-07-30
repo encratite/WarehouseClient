@@ -1,4 +1,5 @@
-package warehouseClient;
+package warehouseClient.protocolUnit;
+
 
 public class DownloadError {
 	public ReleaseData release;

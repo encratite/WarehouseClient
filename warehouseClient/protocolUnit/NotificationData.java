@@ -1,4 +1,4 @@
-package warehouseClient;
+package warehouseClient.protocolUnit;
 
 import java.io.IOException;
 import java.text.ParseException;
@@ -11,6 +11,7 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
+
 
 //this is the actual notification data found inside a NotficationProtocolUnit whose type is equal to "notification"
 public class NotificationData {

@@ -16,6 +16,12 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import warehouseClient.protocolUnit.DownloadError;
+import warehouseClient.protocolUnit.NotificationData;
+import warehouseClient.protocolUnit.ReleaseData;
+import warehouseClient.protocolUnit.RemoteProcedureCallResult;
+import warehouseClient.protocolUnit.ServiceMessage;
+
 public class NotificationProtocolClient implements Runnable {
 	private final int byteBufferSize = 1024;
 	private final int bufferLimit = 100 * byteBufferSize;

@@ -6,26 +6,21 @@ import org.codehaus.jackson.JsonNode;
 import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.layout.FillLayout;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.Table;
-import org.eclipse.swt.widgets.TableColumn;
-import org.eclipse.swt.widgets.TableItem;
+
+import warehouseClient.protocolUnit.NotificationData;
 
 public class WarehouseClient implements Runnable {
-	private NotificationTest protocolClient;
+	private WarehouseProtocolHandler protocolClient;
 	private Thread networkingThread, notificationThread;
 	private Configuration configuration;
+	private WarehouseClientView view;
 	
 	public WarehouseClient(String configurationPath) throws IOException {
 		loadConfiguration(configurationPath);
-		protocolClient = new NotificationTest(configuration.notificationServerAddress, configuration.notificationServerPort);
+		protocolClient = new WarehouseProtocolHandler(configuration.notificationServerAddress, configuration.notificationServerPort);
 		networkingThread = new Thread(protocolClient, "Networking thread");
 		notificationThread = new Thread(this, "Notification thread");
+		view = new WarehouseClientView();
 	}
 	
 	private void setStoreData(String trustStorePath, String trustStorePassword, String keyStorePath, String keyStorePassword) {
@@ -78,6 +73,7 @@ public class WarehouseClient implements Runnable {
 	
 	public void run() {
 		runTest();
+		view.createAndUseView();
 	}
 	
 	private void loadConfiguration(String path) throws IOException {
@@ -91,65 +87,10 @@ public class WarehouseClient implements Runnable {
 	}
 	
 	public void runGUI() {
-		Display display = new Display();
-		Shell shell = new Shell(display);
-        shell.setLayout(new FillLayout());
-        Composite composite = new Composite(shell, SWT.NONE);
-        composite.setLayout(new FillLayout());
-        
-        createTable(composite);
-
-        shell.setSize(480, 300);
-		shell.open();
-		while(!shell.isDisposed()) {
-			if(!display.readAndDispatch())
-				display.sleep();
-		}
-		display.dispose();
-		System.exit(0);
-	}
-	
-	private void createTable(Composite parent) {
-		final int columnCount = 3;
-		
-		Table table = new Table(parent, SWT.V_SCROLL);
-		
-		GridData gridData = new GridData(GridData.FILL_BOTH);
-		gridData.grabExcessVerticalSpace = true;
-		gridData.grabExcessHorizontalSpace = true;
-		gridData.horizontalSpan = columnCount;
-		table.setLayoutData(gridData);
-		
-		table.setLinesVisible(true);
-		table.setHeaderVisible(true);
-		
-		int columnCounter = 0;
-		
-		TableColumn column = new TableColumn(table, SWT.CENTER, columnCounter++);		
-		column.setText("Icon");
-		column.setWidth(40);
-		
-		column = new TableColumn(table, SWT.LEFT, columnCounter++);
-		column.setText("Description");
-		column.setWidth(300);
-		
-		column = new TableColumn(table, SWT.LEFT, columnCounter++);
-		column.setText("Time");
-		column.setWidth(80);
 	}
 	
 	public void runClient() {
 		notificationThread.start();
 		runGUI();
-	}
-	
-	public static void main(String[] arguments) {
-		try {
-			WarehouseClient client = new WarehouseClient("warehouseClient.properties");
-			client.runClient();
-		}
-		catch(IOException exception) {
-			exception.printStackTrace();
-		}
 	}
 }

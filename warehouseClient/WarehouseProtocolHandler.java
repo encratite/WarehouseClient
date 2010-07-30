@@ -2,8 +2,12 @@ package warehouseClient;
 
 import java.io.IOException;
 
-public class NotificationTest extends NotificationProtocolClient {
-	public NotificationTest(String serverAddress, int serverPort) {
+import warehouseClient.protocolUnit.DownloadError;
+import warehouseClient.protocolUnit.ReleaseData;
+import warehouseClient.protocolUnit.ServiceMessage;
+
+public class WarehouseProtocolHandler extends NotificationProtocolClient {
+	public WarehouseProtocolHandler(String serverAddress, int serverPort) {
 		super(serverAddress, serverPort);
 	}
 	

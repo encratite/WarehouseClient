@@ -1,4 +1,4 @@
-package warehouseClient;
+package warehouseClient.protocolUnit;
 
 public class RemoteProcedureCallResult {
 	public int id;
