@@ -20,7 +20,7 @@ public class WarehouseClient implements Runnable {
 		protocolClient = new WarehouseProtocolHandler(configuration.notificationServerAddress, configuration.notificationServerPort);
 		networkingThread = new Thread(protocolClient, "Networking thread");
 		notificationThread = new Thread(this, "Notification thread");
-		view = new WarehouseClientView();
+		view = new WarehouseClientView(this);
 	}
 	
 	private void setStoreData(String trustStorePath, String trustStorePassword, String keyStorePath, String keyStorePassword) {
@@ -73,7 +73,6 @@ public class WarehouseClient implements Runnable {
 	
 	public void run() {
 		runTest();
-		view.createAndUseView();
 	}
 	
 	private void loadConfiguration(String path) throws IOException {
@@ -86,11 +85,12 @@ public class WarehouseClient implements Runnable {
 		);
 	}
 	
-	public void runGUI() {
+	public void runView() {
+		view.createAndUseView();
 	}
 	
 	public void runClient() {
-		notificationThread.start();
-		runGUI();
+		//notificationThread.start();
+		runView();
 	}
 }

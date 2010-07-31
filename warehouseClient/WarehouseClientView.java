@@ -1,22 +1,35 @@
 package warehouseClient;
 
-import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.UIManager;
 
+import ail.Column;
+import ail.Table;
+import ail.Window;
+
 public class WarehouseClientView {
+	private WarehouseClient client;
+	
+	public WarehouseClientView(WarehouseClient newClient) {
+		client = newClient;
+	}
+	
 	public void createAndUseView() {
 		useWindowsTheme();
 		
-		JFrame frame = new JFrame("Warehouse client");
-		final JLabel label = new JLabel("Test");
-		frame.getContentPane().add(label);
-		//center it
-		frame.setLocationRelativeTo(null);
+		Window mainWindow = new Window("Warehouse client", 640, 240);
 		
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.pack();
-		frame.setVisible(true);
+		Column icon = new Column("Icon");
+		int iconWidth = 35;
+		icon.minimum.setSize(iconWidth);
+		icon.maximum.setSize(iconWidth);
+		Column description = new Column("Description");
+		description.preferred.setSize(200);
+		Column time = new Column("Time");
+		time.preferred.setSize(40);
+		
+		Table notificationTable = new Table(icon, description, time);
+		mainWindow.add(notificationTable.getPane());
+		mainWindow.visualise();
 	}
 	
 	private void useWindowsTheme() {
