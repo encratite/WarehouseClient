@@ -41,6 +41,7 @@ public class NotificationData {
 		ObjectMapper mapper = new ObjectMapper();
 		NotificationData data = mapper.readValue(notificationDataNode.traverse(), NotificationData.class);
 		type = data.type;
+		time = data.time;
 		initialise(notificationDataNode);
 	}
 	
@@ -50,28 +51,28 @@ public class NotificationData {
 		JsonParser parser = notificationDataNode.get("content").traverse();
 		switch(type) {
 		case queued:
-			description = "Release queued";
 			releaseData = mapper.readValue(parser, ReleaseData.class);
+			description = "Release queued: " + releaseData.name;
 			break;
 			
 		case downloaded:
-			description = "Release downloaded";
 			releaseData = mapper.readValue(parser, ReleaseData.class);
+			description = "Release downloaded: " + releaseData.name;
 			break;
 			
 		case downloadError:
-			description = "Download error";
 			downloadError = mapper.readValue(parser, DownloadError.class);
+			description = "Download error in release + " + downloadError.release.name + ": " + downloadError.message;
 			break;
 			
 		case downloadDeleted:
-			description = "Download deleted";
 			releaseData = mapper.readValue(parser, ReleaseData.class);
+			description = "Download deleted: " + releaseData.name;
 			break;
 			
 		case serviceMessage:
-			description = "Service message";
 			serviceMessage = mapper.readValue(parser, ServiceMessage.class);
+			description = "Service message of level " + serviceMessage.severity + ": " + serviceMessage.message;
 			break;
 		}
 	}
@@ -81,7 +82,6 @@ public class NotificationData {
 		SimpleDateFormat dateForm = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		dateForm.setTimeZone(utc);
 		time = dateForm.parse(timeString);
-		System.out.println(timeString + " -> " + time.toString());
 	}
 	
 	public void setType(NotificationType newType) {

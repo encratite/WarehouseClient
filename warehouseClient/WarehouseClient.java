@@ -34,7 +34,8 @@ public class WarehouseClient implements Runnable {
 		ObjectMapper mapper = new ObjectMapper();
 		for(JsonNode node : input) {
 			NotificationData unit = new NotificationData(node);
-			System.out.println(unit.description);
+			System.out.println(unit.time.toString() + ": " + unit.description);
+			view.addNotification(unit);
 		}
 	}
 	
@@ -90,7 +91,7 @@ public class WarehouseClient implements Runnable {
 	}
 	
 	public void runClient() {
-		//notificationThread.start();
+		notificationThread.start();
 		runView();
 	}
 }
