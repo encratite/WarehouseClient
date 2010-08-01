@@ -77,11 +77,15 @@ public class NotificationData {
 		}
 	}
 	
-	public void setTime(String timeString) throws ParseException {
+	public void setTime(String inputString) throws ParseException {
+		time = getDateForm().parse(inputString);
+	}
+	
+	public SimpleDateFormat getDateForm() {
 		SimpleTimeZone utc = new SimpleTimeZone(0, "UTC");
 		SimpleDateFormat dateForm = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 		dateForm.setTimeZone(utc);
-		time = dateForm.parse(timeString);
+		return dateForm;
 	}
 	
 	public void setType(NotificationType newType) {

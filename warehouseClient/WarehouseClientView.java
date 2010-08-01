@@ -18,7 +18,7 @@ public class WarehouseClientView {
 		final int
 			totalWidth = 750,
 			iconWidth = 35,
-			timeWidth = 200;
+			timeWidth = 120;
 		
 		Window mainWindow = new Window("Warehouse client", totalWidth, 250);
 		
@@ -39,8 +39,7 @@ public class WarehouseClientView {
 		Object[] row = new Object[3];
 		row[0] = "";
 		row[1] = notification.description;
-		System.out.println("Test: " + notification.time);
-		row[2] = notification.time.toString();
+		row[2] = notification.time;
 		
 		notificationTable.addRow(row);
 	}
