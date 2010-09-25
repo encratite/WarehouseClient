@@ -24,7 +24,7 @@ import warehouseClient.protocolUnit.ServiceMessage;
 
 public class NotificationProtocolClient implements Runnable {
 	private final int byteBufferSize = 1024;
-	private final int bufferLimit = 100 * byteBufferSize;
+	private final int bufferLimit = 1000 * byteBufferSize;
 	
 	private String buffer;
 	private byte[] byteBuffer;

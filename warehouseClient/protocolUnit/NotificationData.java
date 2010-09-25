@@ -33,6 +33,7 @@ public class NotificationData {
 	public ServiceMessage serviceMessage;
 	
 	public String description;
+	public String icon;
 	
 	public NotificationData() {
 	}
@@ -53,26 +54,31 @@ public class NotificationData {
 		case queued:
 			releaseData = mapper.readValue(parser, ReleaseData.class);
 			description = "Release queued: " + releaseData.name;
+			icon = "release-queued";
 			break;
 			
 		case downloaded:
 			releaseData = mapper.readValue(parser, ReleaseData.class);
 			description = "Release downloaded: " + releaseData.name;
+			icon = "release-downloaded";
 			break;
 			
 		case downloadError:
 			downloadError = mapper.readValue(parser, DownloadError.class);
 			description = "Download error in release + " + downloadError.release.name + ": " + downloadError.message;
+			icon = "download-error";
 			break;
 			
 		case downloadDeleted:
 			releaseData = mapper.readValue(parser, ReleaseData.class);
 			description = "Download deleted: " + releaseData.name;
+			icon = "download-deleted";
 			break;
 			
 		case serviceMessage:
 			serviceMessage = mapper.readValue(parser, ServiceMessage.class);
 			description = "Service message of level " + serviceMessage.severity + ": " + serviceMessage.message;
+			icon = "service-message";
 			break;
 		}
 	}
