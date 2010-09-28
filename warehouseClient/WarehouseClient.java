@@ -33,9 +33,14 @@ public class WarehouseClient implements Runnable {
 	private void processOldNotifications(JsonNode input) throws IOException, JsonMappingException, JsonParseException {
 		ObjectMapper mapper = new ObjectMapper();
 		for(JsonNode node : input) {
-			NotificationData unit = new NotificationData(node);
-			System.out.println(unit.time.toString() + ": " + unit.description);
-			view.addNotification(unit);
+			try {
+				NotificationData unit = new NotificationData(node);
+				System.out.println(unit.time.toString() + ": " + unit.description);
+				view.addNotification(unit);
+			}
+			catch(IOException exception) {
+				//ignore the ones which cannot be converted due to their invalid notification types from generateNotification and such
+			}
 		}
 	}
 	

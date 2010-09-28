@@ -12,6 +12,8 @@ import org.codehaus.jackson.JsonParser;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import ail.Time;
+
 
 //this is the actual notification data found inside a NotficationProtocolUnit whose type is equal to "notification"
 public class NotificationData {
@@ -83,8 +85,8 @@ public class NotificationData {
 		}
 	}
 	
-	public void setTime(String inputString) throws ParseException {
-		time = getDateForm().parse(inputString);
+	public void setTime(long timestamp) {
+		time = Time.convertTimestamp(timestamp);
 	}
 	
 	public SimpleDateFormat getDateForm() {
