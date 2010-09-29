@@ -55,6 +55,7 @@ public class WarehouseClientView {
 		
 		Column descriptionColumn = new Column("Description");
 		descriptionColumn.preferred.setSize(totalWidth - iconWidth - timeWidth);
+		descriptionColumn.renderer = new NotificationDescriptionRenderer();
 		
 		Column timeColumn = new Column("Time");
 		timeColumn.preferred.setSize(timeWidth);
@@ -78,7 +79,7 @@ public class WarehouseClientView {
 		return icon;
 	}
 	
-	public void addNotification(NotificationData notification) {
+	public void addNotification(NotificationData notification, boolean isNew) {
 		final int size = 14;
 		
 		Object[] row = new Object[3];
@@ -87,7 +88,7 @@ public class WarehouseClientView {
 		icon.resize(size, size);
 		
 		row[0] = icon;
-		row[1] = notification.description;
+		row[1] = new NotificationDescription(notification.description, isNew);
 		row[2] = notification.time;
 		
 		notificationTable.addRow(row);

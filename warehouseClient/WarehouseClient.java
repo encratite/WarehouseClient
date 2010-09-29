@@ -41,7 +41,7 @@ public class WarehouseClient implements Runnable {
 				try {
 					NotificationData notification = new NotificationData(node);
 					//print(notification.time.toString() + ": " + notification.description);
-					addNotification(notification, false);
+					addNotification(notification, true);
 				}
 				catch(IOException exception) {
 					//ignore the ones which cannot be converted due to their invalid notification types from generateNotification and such
@@ -57,7 +57,7 @@ public class WarehouseClient implements Runnable {
 			storage.notifications.add(notification);
 			storage.increaseCount();
 		}
-		view.addNotification(notification);
+		view.addNotification(notification, isNew);
 	}
 	
 	private void writeStorage() {
@@ -83,9 +83,8 @@ public class WarehouseClient implements Runnable {
 		}
 		
 		//add old notifications to the GUI
-		for(NotificationData i : storage.notifications) {
-			view.addNotification(i);
-		}
+		for(NotificationData i : storage.notifications)
+			view.addNotification(i, false);
 		
 		RemoteProcedureCallHandler
 			getNotificationCount = new RemoteProcedureCallHandler("getNotificationCount", protocolClient),
@@ -109,9 +108,7 @@ public class WarehouseClient implements Runnable {
 		writeStorage();
 	}
 	
-	//this function will be changed to print the data to a text window inside the GUI instead of the console
 	public void print(String input) {
-		//System.out.println(input);
 		view.print(input);
 	}
 	

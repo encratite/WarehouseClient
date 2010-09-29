@@ -27,6 +27,9 @@ public class NotificationStorage implements Serializable {
 		ObjectInputStream objectStream = new ObjectInputStream(fileStream);
 		NotificationStorage output = (NotificationStorage)objectStream.readObject();
 		output.path = path;
+		//this step is necessary because some of the members of the NotificationData are not serialised in order to save space so they need to be calculated dynamically
+		for(NotificationData i : output.notifications)
+			i.initialiseTransientMembers();
 		return output;
 	}
 	
