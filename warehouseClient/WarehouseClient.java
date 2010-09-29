@@ -37,22 +37,26 @@ public class WarehouseClient implements Runnable {
 	private void processNotifications(JsonNode input) throws IOException, JsonMappingException, JsonParseException {
 		ObjectMapper mapper = new ObjectMapper();
 		for(JsonNode node : input) {
-			try {
-				NotificationData notification = new NotificationData(node);
-				//print(notification.time.toString() + ": " + notification.description);
-				addNotification(notification);
-			}
-			catch(IOException exception) {
-				//ignore the ones which cannot be converted due to their invalid notification types from generateNotification and such
-				storage.increaseCount();
+			synchronized(storage) {
+				try {
+					NotificationData notification = new NotificationData(node);
+					//print(notification.time.toString() + ": " + notification.description);
+					addNotification(notification, false);
+				}
+				catch(IOException exception) {
+					//ignore the ones which cannot be converted due to their invalid notification types from generateNotification and such
+					storage.increaseCount();
+				}
 			}
 		}
 		writeStorage();
 	}
 	
-	private void addNotification(NotificationData notification) {
-		storage.notifications.add(notification);
-		storage.increaseCount();
+	private void addNotification(NotificationData notification, boolean isNew) {
+		synchronized(storage) {
+			storage.notifications.add(notification);
+			storage.increaseCount();
+		}
 		view.addNotification(notification);
 	}
 	
@@ -86,6 +90,7 @@ public class WarehouseClient implements Runnable {
 		RemoteProcedureCallHandler
 			getNotificationCount = new RemoteProcedureCallHandler("getNotificationCount", protocolClient),
 			getNotifications = new RemoteProcedureCallHandler("getNotifications", protocolClient);
+		
 		int count = (Integer)getNotificationCount.call();
 		int lastCount = storage.lastNotificationCount;
 		int newNotificationCount = count - lastCount;
@@ -93,19 +98,21 @@ public class WarehouseClient implements Runnable {
 			print("Number of new notifications: " + newNotificationCount);
 			getNotifications.call(lastCount, newNotificationCount);
 			JsonNode newNotificationsNode = getNotifications.node();
-			storage.lastNotificationCount = newNotificationCount;
 			processNotifications(newNotificationsNode);
 		}
+		print("Last notification counts: " + lastCount + " in the storage file, " + count + " on the server");
 	}
 	
+	//this function is called by the protocol client when a new notification arrives
 	public void processNotification(NotificationData notification) {
-		addNotification(notification);
+		addNotification(notification, true);
 		writeStorage();
 	}
 	
 	//this function will be changed to print the data to a text window inside the GUI instead of the console
 	public void print(String input) {
-		System.out.println(input);
+		//System.out.println(input);
+		view.print(input);
 	}
 	
 	public void run() {

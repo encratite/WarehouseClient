@@ -1,32 +1,52 @@
 package warehouseClient;
 
+import java.awt.Rectangle;
+
+import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTextArea;
+
 import warehouseClient.protocolUnit.NotificationData;
 import ail.Column;
+import ail.Icon;
 import ail.Table;
 import ail.Window;
-import ail.Icon;
 
 public class WarehouseClientView {
 	private WarehouseClient client;
 	
+	private JScrollPane messageBoxScrollPane;
+	
 	private Table notificationTable;
+	private JTextArea messageBox;
+	
+	private boolean isFirstMessage;
 	
 	public WarehouseClientView(WarehouseClient newClient) {
 		client = newClient;
+		
+		//early construction required due to premature calls to print()
+		messageBox = new JTextArea();
+		isFirstMessage = true;
 	}
 	
 	public void createAndUseView() {	
 		final int
 			totalWidth = 750,
+			totalHeight = 350,
+			
 			iconWidth = 18,
 			timeWidth = 120,
 			
 			mainIconSize = 32;
 		
+		final double
+			splitRatio = 0.8;
+		
 		Icon mainIcon = loadIcon("application");
 		mainIcon.resize(mainIconSize, mainIconSize);
 		
-		Window mainWindow = new Window("Warehouse client", totalWidth, 250);
+		Window mainWindow = new Window("Warehouse client", totalWidth, totalHeight);
 		mainWindow.setIconImage(mainIcon.icon.getImage());
 		
 		Column iconColumn = new Column("");
@@ -40,7 +60,15 @@ public class WarehouseClientView {
 		timeColumn.preferred.setSize(timeWidth);
 		
 		notificationTable = new Table(iconColumn, descriptionColumn, timeColumn);
-		mainWindow.add(notificationTable.getPane());
+		
+		messageBox.setEditable(false);
+		
+		messageBoxScrollPane = new JScrollPane(messageBox);
+		
+		JSplitPane splitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT, notificationTable.getPane(), messageBoxScrollPane);
+		splitPane.setResizeWeight(splitRatio);
+		
+		mainWindow.add(splitPane);
 		mainWindow.visualise();
 	}
 	
@@ -51,14 +79,26 @@ public class WarehouseClientView {
 	}
 	
 	public void addNotification(NotificationData notification) {
+		final int size = 14;
+		
 		Object[] row = new Object[3];
 		Icon icon = loadIcon(notification.icon);
-		final int size = 14;
+		
 		icon.resize(size, size);
+		
 		row[0] = icon;
 		row[1] = notification.description;
 		row[2] = notification.time;
 		
 		notificationTable.addRow(row);
+	}
+	
+	public void print(String message) {
+		if(isFirstMessage)
+			isFirstMessage = false;
+		else
+			messageBox.append("\n");
+		messageBox.append(message);
+		messageBox.setCaretPosition(messageBox.getText().length());
 	}
 }
