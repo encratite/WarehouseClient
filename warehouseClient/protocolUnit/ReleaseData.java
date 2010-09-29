@@ -1,8 +1,9 @@
 package warehouseClient.protocolUnit;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 
-public class ReleaseData {
+public class ReleaseData implements Serializable {
 	public String site;
 	public int siteId;
 	public String name;

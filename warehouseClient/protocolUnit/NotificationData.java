@@ -1,7 +1,7 @@
 package warehouseClient.protocolUnit;
 
 import java.io.IOException;
-import java.text.ParseException;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.SimpleTimeZone;
@@ -14,9 +14,8 @@ import org.codehaus.jackson.map.ObjectMapper;
 
 import ail.Time;
 
-
 //this is the actual notification data found inside a NotficationProtocolUnit whose type is equal to "notification"
-public class NotificationData {
+public class NotificationData implements Serializable {
 	public enum NotificationType {
 		queued,
 		downloaded,
@@ -25,17 +24,17 @@ public class NotificationData {
 		serviceMessage,
 	};
 	
-	public Date time;
-	public NotificationType type;
+	transient public Date time;
+	transient public NotificationType type;
 	//the field "content" can't be used meaningfully in this context
 	
 	//extended variables deduced from parsing content:
-	public ReleaseData releaseData;
-	public DownloadError downloadError;
-	public ServiceMessage serviceMessage;
+	transient public ReleaseData releaseData;
+	transient public DownloadError downloadError;
+	transient public ServiceMessage serviceMessage;
 	
-	public String description;
-	public String icon;
+	transient public String description;
+	transient public String icon;
 	
 	public NotificationData() {
 	}

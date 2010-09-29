@@ -1,6 +1,8 @@
 package warehouseClient.protocolUnit;
 
-public class ServiceMessage {
+import java.io.Serializable;
+
+public class ServiceMessage implements Serializable {
 	public String severity;
 	public String message;
 	

@@ -59,10 +59,10 @@ public class WarehouseClient implements Runnable {
 			storage.store();
 		}
 		catch(FileNotFoundException exception) {
-			print("Unable to open the notification storage file for writing");
+			print("Unable to open the notification storage file for writing: " + exception.getMessage());
 		}
 		catch(IOException exception) {
-			print("Failed to write the serialised storage data to the notification storage file");
+			print("Failed to write the serialised storage data to the notification storage file: " + exception.getMessage());
 		}
 	}
 	
