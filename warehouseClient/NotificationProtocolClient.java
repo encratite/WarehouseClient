@@ -22,7 +22,7 @@ import warehouseClient.protocolUnit.ReleaseData;
 import warehouseClient.protocolUnit.RemoteProcedureCallResult;
 import warehouseClient.protocolUnit.ServiceMessage;
 
-public class NotificationProtocolClient implements Runnable {
+abstract public class NotificationProtocolClient implements Runnable {
 	private final int byteBufferSize = 1024;
 	private final int bufferLimit = 1000 * byteBufferSize;
 	
@@ -135,6 +135,8 @@ public class NotificationProtocolClient implements Runnable {
 		}
 	}
 	
+	abstract protected void processNotification(NotificationData notification);
+	
 	public void processUnit() throws NotificationError {
 		String unitString = readData();
 		try {
@@ -146,6 +148,7 @@ public class NotificationProtocolClient implements Runnable {
 			switch(unit.type) {
 			case notification:
 				NotificationData notification = new NotificationData(data);
+				processNotification(notification);
 				break;
 				
 			case rpcResult:
@@ -169,21 +172,6 @@ public class NotificationProtocolClient implements Runnable {
 		catch(Exception exception) {
 			throw criticalError("Unable to process JSON data sent by the server: " + exception.getMessage());
 		}
-	}
-	
-	protected void queuedRelease(ReleaseData releaseData) {
-	}
-	
-	protected void downloadedRelease(ReleaseData releaseData) {
-	}
-	
-	protected void downloadError(DownloadError downloadError) {
-	}
-	
-	protected void downloadDeleted(ReleaseData releaseData) {
-	}
-	
-	protected void serviceMessage(ServiceMessage serviceMessage) {
 	}
 	
 	private void sendData(String input) throws IOException {

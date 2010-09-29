@@ -1,5 +1,6 @@
 package warehouseClient;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.codehaus.jackson.JsonNode;
@@ -14,10 +15,13 @@ public class WarehouseClient implements Runnable {
 	private Thread networkingThread, notificationThread;
 	private Configuration configuration;
 	private WarehouseClientView view;
+	private NotificationStorage storage;
+	
+	private static String storagePath = "notifications.ser";
 	
 	public WarehouseClient(String configurationPath) throws IOException {
 		loadConfiguration(configurationPath);
-		protocolClient = new WarehouseProtocolHandler(configuration.notificationServerAddress, configuration.notificationServerPort);
+		protocolClient = new WarehouseProtocolHandler(this, configuration.notificationServerAddress, configuration.notificationServerPort);
 		networkingThread = new Thread(protocolClient, "Networking thread");
 		notificationThread = new Thread(this, "Notification thread");
 		view = new WarehouseClientView(this);
@@ -30,55 +34,105 @@ public class WarehouseClient implements Runnable {
 		System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
 	}
 	
-	private void processOldNotifications(JsonNode input) throws IOException, JsonMappingException, JsonParseException {
+	private void processNotifications(JsonNode input) throws IOException, JsonMappingException, JsonParseException {
 		ObjectMapper mapper = new ObjectMapper();
 		for(JsonNode node : input) {
 			try {
-				NotificationData unit = new NotificationData(node);
-				System.out.println(unit.time.toString() + ": " + unit.description);
-				view.addNotification(unit);
+				NotificationData notification = new NotificationData(node);
+				print(notification.time.toString() + ": " + notification.description);
+				addNotification(notification);
 			}
 			catch(IOException exception) {
 				//ignore the ones which cannot be converted due to their invalid notification types from generateNotification and such
 			}
 		}
+		writeStorage();
 	}
 	
-	private void runTest() {
+	private void addNotification(NotificationData notification) {
+		storage.notifications.add(notification);
+		view.addNotification(notification);
+	}
+	
+	private void writeStorage() {
+		try {
+			storage.store();
+		}
+		catch(FileNotFoundException exception) {
+			print("Unable to open the notification storage file for writing");
+		}
+		catch(IOException exception) {
+			print("Failed to write the serialised storage data to the notification storage file");
+		}
+	}
+	
+	private void loadNotificationData() throws InterruptedException, IOException, NotificationProtocolClient.NotificationError, ClassNotFoundException, ClassCastException {
+		try {
+			storage = NotificationStorage.load(storagePath);
+		}
+		catch(FileNotFoundException exception) {
+			//the configuration file didn't exist yet - no problem
+			storage = new NotificationStorage(storagePath);
+		}
+		
+		//add old notifications to the GUI
+		for(NotificationData i : storage.notifications) {
+			view.addNotification(i);
+		}
+		
+		RemoteProcedureCallHandler
+			getNotificationCount = new RemoteProcedureCallHandler("getNotificationCount", protocolClient),
+			getNotifications = new RemoteProcedureCallHandler("getNotifications", protocolClient);
+		int count = (Integer)getNotificationCount.call();
+		int lastCount = storage.lastNotificationCount;
+		int newNotificationCount = count - lastCount;
+		if(count > lastCount) {
+			print("Number of new notifications: " + newNotificationCount);
+			getNotifications.call(lastCount, newNotificationCount);
+			JsonNode newNotificationsNode = getNotifications.node();
+			processNotifications(newNotificationsNode);
+		}
+	}
+	
+	public void processNotification(NotificationData notification) {
+		addNotification(notification);
+		writeStorage();
+	}
+	
+	//this function will be changed to print the data to a text window inside the GUI instead of the console
+	public void print(String input) {
+		System.out.println(input);
+	}
+	
+	public void run() {
 		try {
 			protocolClient.connect();
 		}
 		catch(IOException exception) {
-			System.out.println("Failed to connect: " + exception.getMessage());
-			System.exit(1);
+			print("Failed to connect: " + exception.getMessage());
 		}
 		networkingThread.start();
 		try {
-			RemoteProcedureCallHandler
-				getNotificationCount = new RemoteProcedureCallHandler("getNotificationCount", protocolClient),
-				getOldNotifications = new RemoteProcedureCallHandler("getOldNotifications", protocolClient);
-			int count = (Integer)getNotificationCount.call();
-			System.out.println("Number of messages: " + count);
-			getOldNotifications.call(0, Math.max(count - 1, 0));
-			JsonNode oldNotificationsNode = getOldNotifications.node();
-			processOldNotifications(oldNotificationsNode);
+			loadNotificationData();
 		}
 		catch(InterruptedException exception) {
-			System.out.println("Interrupted");
+			print("Interrupted");
 		}
 		catch(IOException exception) {
-			System.out.println("An IO exception occured: " + exception.getMessage());
+			print("An IO exception occured: " + exception.getMessage());
 		}
 		catch(NotificationProtocolClient.NotificationError exception) {
-			System.out.println("An notification error occured: " + exception.getMessage());
+			print("A notification error occured: " + exception.getMessage());
 		}
 		catch(ClassCastException exception) {
-			System.out.println("The server returned invalid data which could not be interpreted: " + exception.getMessage());
+			print("The server returned invalid data which could not be interpreted: " + exception.getMessage());
 		}
-	}
-	
-	public void run() {
-		runTest();
+		catch(ClassNotFoundException exception) {
+			print("Invalid configuration file!");
+		}
+		catch(Exception exception) {
+			print("An exception occured: " + exception.getMessage());
+		}
 	}
 	
 	private void loadConfiguration(String path) throws IOException {
