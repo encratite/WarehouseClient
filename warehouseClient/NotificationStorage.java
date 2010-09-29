@@ -35,4 +35,8 @@ public class NotificationStorage implements Serializable {
 		ObjectOutputStream objectStream = new ObjectOutputStream(fileStream);
 		objectStream.writeObject(this);
 	}
+	
+	public void increaseCount() {
+		lastNotificationCount += 1;
+	}
 }

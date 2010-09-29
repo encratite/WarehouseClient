@@ -73,13 +73,13 @@ abstract public class NotificationProtocolClient implements Runnable {
 	}
 	
 	private void printReadData(String data) {
-		System.out.println("Read " + data.length() + " bytes:\n" + data);
+		//System.out.println("Read " + data.length() + " bytes:\n" + data);
 	}
 	
 	private String readData() throws NotificationError {
 		try {
 			while(true) {
-				System.out.println("Reading...");
+				//System.out.println("Reading...");
 				int bytesRead = inputStream.read(byteBuffer);
 				String newData = new String(byteBuffer, 0, bytesRead);
 				printReadData(newData);
@@ -200,9 +200,11 @@ abstract public class NotificationProtocolClient implements Runnable {
 			packetStream.write(lengthPrefix.getBytes());
 			packetStream.write(rpcDataStream.toByteArray());
 			byte[] output = packetStream.toByteArray();
+			/*
 			System.out.println("Writing " + output.length + " bytes:");
 			System.out.write(output);
 			System.out.print('\n');
+			*/
 			outputStream.write(output);
 		}
 		catch(JsonGenerationException exception) {

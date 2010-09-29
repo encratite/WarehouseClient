@@ -24,17 +24,17 @@ public class NotificationData implements Serializable {
 		serviceMessage,
 	};
 	
-	transient public Date time;
-	transient public NotificationType type;
+	public Date time;
+	public NotificationType type;
 	//the field "content" can't be used meaningfully in this context
 	
 	//extended variables deduced from parsing content:
-	transient public ReleaseData releaseData;
-	transient public DownloadError downloadError;
-	transient public ServiceMessage serviceMessage;
+	public ReleaseData releaseData;
+	public DownloadError downloadError;
+	public ServiceMessage serviceMessage;
 	
-	transient public String description;
-	transient public String icon;
+	public String description;
+	public String icon;
 	
 	public NotificationData() {
 	}

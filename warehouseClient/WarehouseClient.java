@@ -39,11 +39,12 @@ public class WarehouseClient implements Runnable {
 		for(JsonNode node : input) {
 			try {
 				NotificationData notification = new NotificationData(node);
-				print(notification.time.toString() + ": " + notification.description);
+				//print(notification.time.toString() + ": " + notification.description);
 				addNotification(notification);
 			}
 			catch(IOException exception) {
 				//ignore the ones which cannot be converted due to their invalid notification types from generateNotification and such
+				storage.increaseCount();
 			}
 		}
 		writeStorage();
@@ -51,6 +52,7 @@ public class WarehouseClient implements Runnable {
 	
 	private void addNotification(NotificationData notification) {
 		storage.notifications.add(notification);
+		storage.increaseCount();
 		view.addNotification(notification);
 	}
 	
@@ -69,6 +71,7 @@ public class WarehouseClient implements Runnable {
 	private void loadNotificationData() throws InterruptedException, IOException, NotificationProtocolClient.NotificationError, ClassNotFoundException, ClassCastException {
 		try {
 			storage = NotificationStorage.load(storagePath);
+			print("Loaded " + storage.notifications.size() + " notifications from the notification storage file");
 		}
 		catch(FileNotFoundException exception) {
 			//the configuration file didn't exist yet - no problem
@@ -90,6 +93,7 @@ public class WarehouseClient implements Runnable {
 			print("Number of new notifications: " + newNotificationCount);
 			getNotifications.call(lastCount, newNotificationCount);
 			JsonNode newNotificationsNode = getNotifications.node();
+			storage.lastNotificationCount = newNotificationCount;
 			processNotifications(newNotificationsNode);
 		}
 	}
@@ -120,6 +124,7 @@ public class WarehouseClient implements Runnable {
 		}
 		catch(IOException exception) {
 			print("An IO exception occured: " + exception.getMessage());
+			exception.printStackTrace();
 		}
 		catch(NotificationProtocolClient.NotificationError exception) {
 			print("A notification error occured: " + exception.getMessage());
