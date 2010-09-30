@@ -11,6 +11,8 @@ public class NotificationDescriptionRenderer extends DefaultCellRenderer {
 			setText(description.description);
 			if(description.isNew)
 				setForeground(new Color(0x0db400));
+			else
+				setForeground(Color.black);
 		}
 		else
 			super.setValue(value);

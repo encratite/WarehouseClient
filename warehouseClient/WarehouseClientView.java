@@ -1,6 +1,6 @@
 package warehouseClient;
 
-import java.awt.Rectangle;
+import java.util.Date;
 
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
@@ -49,16 +49,17 @@ public class WarehouseClientView {
 		Window mainWindow = new Window("Warehouse client", totalWidth, totalHeight);
 		mainWindow.setIconImage(mainIcon.icon.getImage());
 		
-		Column iconColumn = new Column("");
+		Column iconColumn = new Column("", Icon.class);
 		iconColumn.minimum.setSize(iconWidth);
 		iconColumn.maximum.setSize(iconWidth);
 		
-		Column descriptionColumn = new Column("Description");
+		Column descriptionColumn = new Column("Description", NotificationDescription.class);
 		descriptionColumn.preferred.setSize(totalWidth - iconWidth - timeWidth);
 		descriptionColumn.renderer = new NotificationDescriptionRenderer();
 		
-		Column timeColumn = new Column("Time");
+		Column timeColumn = new Column("Time", Date.class);
 		timeColumn.preferred.setSize(timeWidth);
+		timeColumn.sortDescending();
 		
 		notificationTable = new Table(iconColumn, descriptionColumn, timeColumn);
 		
