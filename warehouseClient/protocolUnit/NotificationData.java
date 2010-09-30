@@ -76,6 +76,16 @@ public class NotificationData implements Serializable {
 		initialiseTransientMembers();
 	}
 	
+	public boolean isNegative() {
+		switch(type) {
+		case downloadError:
+		case serviceMessage:
+			return true;
+		default:
+			return false;
+		}
+	}
+	
 	public void initialiseTransientMembers() {
 		switch(type) {
 		case queued:

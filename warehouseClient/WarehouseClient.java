@@ -9,6 +9,8 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import warehouseClient.protocolUnit.NotificationData;
+import warehouseClient.protocolUnit.NotificationData.NotificationType;
+import ail.SoundPlayer;
 
 public class WarehouseClient implements Runnable {
 	private WarehouseProtocolHandler protocolClient;
@@ -19,12 +21,29 @@ public class WarehouseClient implements Runnable {
 	
 	private static String storagePath = "notifications.ser";
 	
+	private SoundPlayer
+		notificationSound,
+		errorSound;
+	
+	enum NewNotificationsResult {
+		noNewNotifications,
+		gotNewNotifications,
+		anErrorOccured,
+	}
+	
 	public WarehouseClient(String configurationPath) throws IOException {
 		loadConfiguration(configurationPath);
 		protocolClient = new WarehouseProtocolHandler(this, configuration.notificationServerAddress, configuration.notificationServerPort);
 		networkingThread = new Thread(protocolClient, "Networking thread");
 		notificationThread = new Thread(this, "Notification thread");
 		view = new WarehouseClientView(this);
+		
+		notificationSound = getSound("notification");
+		errorSound = getSound("error");
+	}
+	
+	private SoundPlayer getSound(String base) {
+		return new SoundPlayer("sound/" + base + ".wav");
 	}
 	
 	private void setStoreData(String trustStorePath, String trustStorePassword, String keyStorePath, String keyStorePassword) {
@@ -34,14 +53,21 @@ public class WarehouseClient implements Runnable {
 		System.setProperty("javax.net.ssl.keyStorePassword", keyStorePassword);
 	}
 	
-	private void processNotifications(JsonNode input) throws IOException, JsonMappingException, JsonParseException {
+	//returns if any new notifications were added
+	private NewNotificationsResult processNotifications(JsonNode input) throws IOException, JsonMappingException, JsonParseException {
 		ObjectMapper mapper = new ObjectMapper();
+		NewNotificationsResult output = NewNotificationsResult.noNewNotifications;
 		for(JsonNode node : input) {
 			synchronized(storage) {
 				try {
 					NotificationData notification = new NotificationData(node);
 					//print(notification.time.toString() + ": " + notification.description);
 					addNotification(notification, true);
+
+					if(notification.isNegative())
+						output = NewNotificationsResult.anErrorOccured;
+					else if(output != NewNotificationsResult.anErrorOccured)
+						output = NewNotificationsResult.gotNewNotifications;
 				}
 				catch(IOException exception) {
 					//ignore the ones which cannot be converted due to their invalid notification types from generateNotification and such
@@ -50,6 +76,7 @@ public class WarehouseClient implements Runnable {
 			}
 		}
 		writeStorage();
+		return output;
 	}
 	
 	private void addNotification(NotificationData notification, boolean isNew) {
@@ -97,7 +124,14 @@ public class WarehouseClient implements Runnable {
 			print("Number of new notifications: " + newNotificationCount);
 			getNotifications.call(lastCount, newNotificationCount);
 			JsonNode newNotificationsNode = getNotifications.node();
-			processNotifications(newNotificationsNode);
+			switch(processNotifications(newNotificationsNode)) {
+			case gotNewNotifications:
+				notificationSound.play();
+				break;
+			case anErrorOccured:
+				errorSound.play();
+				break;
+			}
 		}
 		print("Last notification counts: " + lastCount + " in the storage file, " + count + " on the server");
 	}
@@ -106,6 +140,10 @@ public class WarehouseClient implements Runnable {
 	public void processNotification(NotificationData notification) {
 		addNotification(notification, true);
 		writeStorage();
+		if(notification.isNegative())
+			errorSound.play();
+		else
+			notificationSound.play();
 	}
 	
 	public void print(String input) {
@@ -140,7 +178,7 @@ public class WarehouseClient implements Runnable {
 			print("Invalid configuration file!");
 		}
 		catch(Exception exception) {
-			print("An exception occured: " + exception.getMessage());
+			print("An exception of type " + exception.getClass().toString() + " occured: " + exception.getMessage());
 		}
 	}
 	
