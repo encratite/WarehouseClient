@@ -25,6 +25,7 @@ import warehouseClient.protocolUnit.ServiceMessage;
 abstract public class NotificationProtocolClient implements Runnable {
 	private final int byteBufferSize = 1024;
 	private final int bufferLimit = 1000 * byteBufferSize;
+	private final int reconnectDelayInSeconds = 10;
 	
 	private String buffer;
 	private byte[] byteBuffer;
@@ -41,7 +42,7 @@ abstract public class NotificationProtocolClient implements Runnable {
 	private int rpcId;
 	private Map<Integer, RemoteProcedureCallHandler> rpcHandlers;
 	
-	private ExceptionHandler exceptionHandler;
+	private EventHandler eventHandler;
 	
 	public class NotificationError extends Exception {
 		public NotificationError() {
@@ -56,7 +57,10 @@ abstract public class NotificationProtocolClient implements Runnable {
 	public class DisconnectedError extends NotificationError {
 	}
 	
-	interface ExceptionHandler {
+	interface EventHandler {
+		public void handleNotificationServerConnectionError(IOException exception);
+		public void handleNotificationServerConnecting();
+		public void handleNotificationServerConnected();
 		public void handleNotificationServerDisconnect();
 		public void handleCriticalNotificationError(NotificationError error);
 	}
@@ -64,10 +68,10 @@ abstract public class NotificationProtocolClient implements Runnable {
 	public NotificationProtocolClient() {
 	}
 	
-	public NotificationProtocolClient(String address, int port, ExceptionHandler exceptionHandler) {
+	public NotificationProtocolClient(String address, int port, EventHandler exceptionHandler) {
 		this.address = address;
 		this.port = port;
-		this.exceptionHandler = exceptionHandler;
+		this.eventHandler = exceptionHandler;
 		
 		byteBuffer = new byte[byteBufferSize];
 		mapper = new ObjectMapper();
@@ -236,16 +240,34 @@ abstract public class NotificationProtocolClient implements Runnable {
 	}
 	
 	public void run() {
-		try {
-			while(true) {
-				processUnit();
+		while(true) {
+			eventHandler.handleNotificationServerConnecting();
+			try {
+				connect();
 			}
-		}
-		catch(DisconnectedError exception) {
-			exceptionHandler.handleNotificationServerDisconnect();
-		}
-		catch(NotificationError exception) {
-			exceptionHandler.handleCriticalNotificationError(exception);
+			catch(IOException exception) {
+				eventHandler.handleNotificationServerConnectionError(exception);
+				try {
+					Thread.sleep(reconnectDelayInSeconds * 1000);
+				}
+				catch(InterruptedException unused) {
+				}
+				continue;
+			}
+			
+			eventHandler.handleNotificationServerConnected();
+			
+			try {
+				while(true) {
+					processUnit();
+				}
+			}
+			catch(DisconnectedError exception) {
+				eventHandler.handleNotificationServerDisconnect();
+			}
+			catch(NotificationError exception) {
+				eventHandler.handleCriticalNotificationError(exception);
+			}
 		}
 	}
 }

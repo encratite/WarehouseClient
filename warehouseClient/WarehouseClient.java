@@ -13,9 +13,8 @@ import warehouseClient.protocolUnit.NotificationData;
 import warehouseClient.protocolUnit.NotificationData.NotificationType;
 import ail.SoundPlayer;
 
-public class WarehouseClient implements Runnable, NotificationProtocolClient.ExceptionHandler {
+public class WarehouseClient extends NotificationProtocolClient implements NotificationProtocolClient.EventHandler {
 	private WarehouseProtocolHandler protocolClient;
-	private Thread networkingThread, notificationThread;
 	private Configuration configuration;
 	private WarehouseClientView view;
 	private NotificationStorage storage;
@@ -35,12 +34,12 @@ public class WarehouseClient implements Runnable, NotificationProtocolClient.Exc
 	public WarehouseClient(String configurationPath) throws IOException {
 		loadConfiguration(configurationPath);
 		protocolClient = new WarehouseProtocolHandler(this, configuration.notificationServerAddress, configuration.notificationServerPort);
-		networkingThread = new Thread(protocolClient, "Networking thread");
-		notificationThread = new Thread(this, "Notification thread");
 		view = new WarehouseClientView(this);
 		
 		notificationSound = getSound("notification");
 		errorSound = getSound("error");
+		
+		storage = null;
 	}
 	
 	private SoundPlayer getSound(String base) {
@@ -100,20 +99,30 @@ public class WarehouseClient implements Runnable, NotificationProtocolClient.Exc
 		}
 	}
 	
-	private void loadNotificationData() throws InterruptedException, IOException, NotificationProtocolClient.NotificationError, ClassNotFoundException, ClassCastException {
-		try {
-			storage = NotificationStorage.load(storagePath);
-			print("Loaded " + storage.notifications.size() + " notifications from the notification storage file");
+	private void loadLocalNotificationData() throws IOException, ClassNotFoundException {
+		if(storage == null) {
+			//only load the stuff from the notification storage file the first time this is run
+			//necessary since it will be called again after a reconnect (due to temporary connection problems)
+			try {
+				storage = NotificationStorage.load(storagePath);
+				print("Loaded " + storage.notifications.size() + " notifications from the notification storage file");
+			}
+			catch(FileNotFoundException exception) {
+				//the configuration file didn't exist yet - no problem
+				storage = new NotificationStorage(storagePath);
+			}
+			
+			//add old notifications to the GUI
+			for(NotificationData i : storage.notifications)
+				view.addNotification(i, false);
 		}
-		catch(FileNotFoundException exception) {
-			//the configuration file didn't exist yet - no problem
-			storage = new NotificationStorage(storagePath);
-		}
-		
-		//add old notifications to the GUI
-		for(NotificationData i : storage.notifications)
-			view.addNotification(i, false);
-		
+	}
+	
+	private void noNewNotifications() {
+		print("No new notifications available on the server");
+	}
+	
+	private void loadRemoteNotificationData() throws InterruptedException, IOException, NotificationProtocolClient.NotificationError, ClassNotFoundException, ClassCastException {
 		RemoteProcedureCallHandler
 			getNotificationCount = new RemoteProcedureCallHandler("getNotificationCount", protocolClient),
 			getNotifications = new RemoteProcedureCallHandler("getNotifications", protocolClient);
@@ -125,7 +134,8 @@ public class WarehouseClient implements Runnable, NotificationProtocolClient.Exc
 			print("Number of new notifications: " + newNotificationCount);
 			getNotifications.call(0, newNotificationCount);
 			JsonNode newNotificationsNode = getNotifications.node();
-			switch(processNotifications(newNotificationsNode)) {
+			NewNotificationsResult result = processNotifications(newNotificationsNode); 
+			switch(result) {
 			case gotNewNotifications:
 				notificationSound.play();
 				break;
@@ -133,7 +143,11 @@ public class WarehouseClient implements Runnable, NotificationProtocolClient.Exc
 				errorSound.play();
 				break;
 			}
+			if(result == NewNotificationsResult.noNewNotifications)
+				noNewNotifications();
 		}
+		else
+			noNewNotifications();
 		print("Last notification counts: " + lastCount + " in the storage file, " + count + " on the server");
 	}
 	
@@ -151,38 +165,6 @@ public class WarehouseClient implements Runnable, NotificationProtocolClient.Exc
 		view.print(input);
 	}
 	
-	public void run() {
-		try {
-			protocolClient.connect();
-		}
-		catch(IOException exception) {
-			print("Failed to connect: " + exception.getMessage());
-		}
-		networkingThread.start();
-		try {
-			loadNotificationData();
-		}
-		catch(InterruptedException exception) {
-			print("Interrupted");
-		}
-		catch(IOException exception) {
-			print("An IO exception occured: " + exception.getMessage());
-			exception.printStackTrace();
-		}
-		catch(NotificationProtocolClient.NotificationError exception) {
-			print("A notification error occured: " + exception.getMessage());
-		}
-		catch(ClassCastException exception) {
-			print("The server returned invalid data which could not be interpreted: " + exception.getMessage());
-		}
-		catch(ClassNotFoundException exception) {
-			print("Invalid configuration file!");
-		}
-		catch(Exception exception) {
-			print("An exception of type " + exception.getClass().toString() + " occured: " + exception.getMessage());
-		}
-	}
-	
 	private void loadConfiguration(String path) throws IOException {
 		configuration = new Configuration(path);
 		setStoreData(
@@ -193,13 +175,58 @@ public class WarehouseClient implements Runnable, NotificationProtocolClient.Exc
 		);
 	}
 	
-	public void runView() {
+	public void runClient() {
 		view.createAndUseView();
+		try {
+			loadLocalNotificationData();
+		}
+		catch(IOException exception) {
+			print("Failed to process configuration file data: " + exception.getMessage());
+		}
+		catch(ClassNotFoundException exception) {
+			print("Invalid configuration file!");
+		}
+		protocolClient.run();
 	}
 	
-	public void runClient() {
-		notificationThread.start();
-		runView();
+	public void handleNotificationServerConnecting() {
+		print("Connecting");
+	}
+	
+	public void handleNotificationServerConnected() {
+		print("Connected");
+		
+		Runnable dataLoader = new Runnable() {
+			public void run() {
+				try {
+					loadRemoteNotificationData();
+				}
+				catch(InterruptedException exception) {
+					print("Interrupted");
+				}
+				catch(IOException exception) {
+					print("An IO exception occured: " + exception.getMessage());
+				}
+				catch(NotificationProtocolClient.NotificationError exception) {
+					print("A notification error occured: " + exception.getMessage());
+				}
+				catch(ClassCastException exception) {
+					print("The server returned invalid data which could not be interpreted: " + exception.getMessage());
+				}
+				catch(ClassNotFoundException exception) {
+					print("Unable to find class: " + exception.getMessage());
+				}
+				catch(Exception exception) {
+					print("An exception of type " + exception.getClass().toString() + " occured: " + exception.getMessage());
+				}
+			}
+		};
+		
+		new Thread(dataLoader, "Remote data loader").start();
+	}
+	
+	public void handleNotificationServerConnectionError(IOException exception) {
+		print("Unable to connect to server: " + exception.getMessage());
 	}
 	
 	public void handleNotificationServerDisconnect() {

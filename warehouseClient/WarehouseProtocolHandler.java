@@ -15,16 +15,6 @@ public class WarehouseProtocolHandler extends NotificationProtocolClient {
 		this.client = client;
 	}
 	
-	public void connect() throws IOException {
-		print("Connecting...");
-		super.connect();
-		print("Connected");
-	}
-	
-	private void print(String message) {
-		client.print(message);
-	}
-	
 	protected void processNotification(NotificationData notification) {
 		client.processNotification(notification);
 	}
