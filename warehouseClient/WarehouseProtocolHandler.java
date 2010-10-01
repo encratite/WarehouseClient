@@ -10,9 +10,9 @@ import warehouseClient.protocolUnit.ServiceMessage;
 public class WarehouseProtocolHandler extends NotificationProtocolClient {
 	private WarehouseClient client;
 	
-	public WarehouseProtocolHandler(WarehouseClient newClient, String serverAddress, int serverPort) {
-		super(serverAddress, serverPort);
-		client = newClient;
+	public WarehouseProtocolHandler(WarehouseClient client, String address, int port) {
+		super(address, port, client);
+		this.client = client;
 	}
 	
 	public void connect() throws IOException {

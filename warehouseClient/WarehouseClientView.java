@@ -11,6 +11,7 @@ import warehouseClient.protocolUnit.NotificationData;
 import ail.Column;
 import ail.Icon;
 import ail.Table;
+import ail.Time;
 import ail.Window;
 
 public class WarehouseClientView {
@@ -82,38 +83,52 @@ public class WarehouseClientView {
 	}
 	
 	public void addNotification(NotificationData notification, boolean isNew) {
-		final int size = 14;
-		
-		Object[] row = new Object[3];
-		Icon icon = loadIcon(notification.icon);
-		
-		icon.resize(size, size);
-		
-		row[0] = icon;
-		row[1] = new NotificationDescription(notification.description, isNew);
-		row[2] = notification.time;
-		
-		SwingUtilities.invokeLater(new RowAdder(row));
+		SwingUtilities.invokeLater(new RowAdder(notification, isNew));
 	}
 	
 	public void print(String message) {
-		if(isFirstMessage)
-			isFirstMessage = false;
-		else
-			messageBox.append("\n");
-		messageBox.append(message);
-		messageBox.setCaretPosition(messageBox.getText().length());
+		SwingUtilities.invokeLater(new MessageBoxHandler(message));
 	}
 	
 	private class RowAdder implements Runnable {
-		private Object[] row;
+		private NotificationData notification;
+		private boolean isNew;
 		
-		public RowAdder(Object[] row) {
-			this.row = row;
+		public RowAdder(NotificationData notification, boolean isNew) {
+			this.notification = notification;
+			this.isNew = isNew;
 		}
 		
 		public void run() {
+			final int size = 14;
+			
+			Object[] row = new Object[3];
+			Icon icon = loadIcon(notification.icon);
+			
+			icon.resize(size, size);
+			
+			row[0] = icon;
+			row[1] = new NotificationDescription(notification.description, isNew);
+			row[2] = notification.time;
+			
 			notificationTable.addRow(row);
+		}
+	}
+	
+	private class MessageBoxHandler implements Runnable {
+		private String message;
+		
+		public MessageBoxHandler(String message) {
+			this.message = Time.getCurrentDateString() + " " + message;
+		}
+		
+		public void run() {
+			if(isFirstMessage)
+				isFirstMessage = false;
+			else
+				messageBox.append("\n");
+			messageBox.append(message);
+			messageBox.setCaretPosition(messageBox.getText().length());
 		}
 	}
 }

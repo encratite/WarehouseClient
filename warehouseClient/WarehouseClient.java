@@ -8,11 +8,12 @@ import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.codehaus.jackson.map.ObjectMapper;
 
+import warehouseClient.NotificationProtocolClient.NotificationError;
 import warehouseClient.protocolUnit.NotificationData;
 import warehouseClient.protocolUnit.NotificationData.NotificationType;
 import ail.SoundPlayer;
 
-public class WarehouseClient implements Runnable {
+public class WarehouseClient implements Runnable, NotificationProtocolClient.ExceptionHandler {
 	private WarehouseProtocolHandler protocolClient;
 	private Thread networkingThread, notificationThread;
 	private Configuration configuration;
@@ -122,7 +123,7 @@ public class WarehouseClient implements Runnable {
 		int newNotificationCount = count - lastCount;
 		if(count > lastCount) {
 			print("Number of new notifications: " + newNotificationCount);
-			getNotifications.call(lastCount, newNotificationCount);
+			getNotifications.call(0, newNotificationCount);
 			JsonNode newNotificationsNode = getNotifications.node();
 			switch(processNotifications(newNotificationsNode)) {
 			case gotNewNotifications:
@@ -199,5 +200,15 @@ public class WarehouseClient implements Runnable {
 	public void runClient() {
 		notificationThread.start();
 		runView();
+	}
+	
+	public void handleNotificationServerDisconnect() {
+		print("Disconnected");
+		errorSound.play();
+	}
+	
+	public void handleCriticalNotificationError(NotificationError error) {
+		print("A critical error occured: " + error.getMessage());
+		errorSound.play();
 	}
 }

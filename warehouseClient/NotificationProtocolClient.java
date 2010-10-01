@@ -39,9 +39,11 @@ abstract public class NotificationProtocolClient implements Runnable {
 	private ObjectMapper mapper;
 	
 	private int rpcId;
-	private Map<Integer, RemoteProcedureCallHandler> rpcHandlers; 
+	private Map<Integer, RemoteProcedureCallHandler> rpcHandlers;
 	
-	class NotificationError extends Exception {
+	private ExceptionHandler exceptionHandler;
+	
+	public class NotificationError extends Exception {
 		public NotificationError() {
 			super();
 		}
@@ -51,12 +53,22 @@ abstract public class NotificationProtocolClient implements Runnable {
 		}
 	}
 	
+	public class DisconnectedError extends NotificationError {
+	}
+	
+	interface ExceptionHandler {
+		public void handleNotificationServerDisconnect();
+		public void handleCriticalNotificationError(NotificationError error);
+	}
+	
 	public NotificationProtocolClient() {
 	}
 	
-	public NotificationProtocolClient(String serverAddress, int serverPort) {
-		address = serverAddress;
-		port = serverPort;
+	public NotificationProtocolClient(String address, int port, ExceptionHandler exceptionHandler) {
+		this.address = address;
+		this.port = port;
+		this.exceptionHandler = exceptionHandler;
+		
 		byteBuffer = new byte[byteBufferSize];
 		mapper = new ObjectMapper();
 		rpcHandlers = new HashMap<Integer, RemoteProcedureCallHandler>();
@@ -81,6 +93,8 @@ abstract public class NotificationProtocolClient implements Runnable {
 			while(true) {
 				//System.out.println("Reading...");
 				int bytesRead = inputStream.read(byteBuffer);
+				if(bytesRead == -1)
+					throw new DisconnectedError();
 				String newData = new String(byteBuffer, 0, bytesRead);
 				printReadData(newData);
 				buffer = buffer.concat(newData);
@@ -164,9 +178,7 @@ abstract public class NotificationProtocolClient implements Runnable {
 				
 			case error:
 				String message = data.toString();
-				System.out.println("A protocol error occured: " + message);
-				System.exit(1);
-				break;
+				throw criticalError("A protocol error occured: " + message);
 			}
 		}
 		catch(Exception exception) {
@@ -214,7 +226,7 @@ abstract public class NotificationProtocolClient implements Runnable {
 		rpcId++;
 	}
 	
-	private NotificationError criticalError(String message) {
+	public NotificationError criticalError(String message) {
 		try {
 			socket.close();
 		}
@@ -229,8 +241,11 @@ abstract public class NotificationProtocolClient implements Runnable {
 				processUnit();
 			}
 		}
-		catch(NotificationProtocolClient.NotificationError exception) {
-			System.out.println("A notification client exception occured: " + exception.getMessage());
+		catch(DisconnectedError exception) {
+			exceptionHandler.handleNotificationServerDisconnect();
+		}
+		catch(NotificationError exception) {
+			exceptionHandler.handleCriticalNotificationError(exception);
 		}
 	}
 }
