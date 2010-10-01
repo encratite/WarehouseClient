@@ -5,6 +5,7 @@ import java.util.Date;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
+import javax.swing.SwingUtilities;
 
 import warehouseClient.protocolUnit.NotificationData;
 import ail.Column;
@@ -30,7 +31,7 @@ public class WarehouseClientView {
 		isFirstMessage = true;
 	}
 	
-	public void createAndUseView() {	
+	public void createAndUseView() {
 		final int
 			totalWidth = 750,
 			totalHeight = 350,
@@ -92,7 +93,7 @@ public class WarehouseClientView {
 		row[1] = new NotificationDescription(notification.description, isNew);
 		row[2] = notification.time;
 		
-		notificationTable.addRow(row);
+		SwingUtilities.invokeLater(new RowAdder(row));
 	}
 	
 	public void print(String message) {
@@ -102,5 +103,17 @@ public class WarehouseClientView {
 			messageBox.append("\n");
 		messageBox.append(message);
 		messageBox.setCaretPosition(messageBox.getText().length());
+	}
+	
+	private class RowAdder implements Runnable {
+		private Object[] row;
+		
+		public RowAdder(Object[] row) {
+			this.row = row;
+		}
+		
+		public void run() {
+			notificationTable.addRow(row);
+		}
 	}
 }
