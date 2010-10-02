@@ -109,7 +109,7 @@ public class NotificationData implements Serializable {
 			break;
 			
 		case serviceMessage:
-			description = "Service message of level " + serviceMessage.severity + ": " + serviceMessage.message;
+			description = "Service message of level \"" + serviceMessage.severity + "\": " + serviceMessage.message;
 			icon = "service-message";
 			break;
 		}
