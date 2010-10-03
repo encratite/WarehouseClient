@@ -4,14 +4,14 @@ import java.io.Serializable;
 
 
 public class DownloadError implements Serializable {
-	public ReleaseData release;
+	public String release;
 	public String message;
 	
-	public void setRelease(ReleaseData newRelease) {
-		release = newRelease;
+	public void setRelease(String release) {
+		this.release = release;
 	}
 	
-	public void setMessage(String newMessage) {
-		message = newMessage;
+	public void setMessage(String message) {
+		this.message = message;
 	}
 }

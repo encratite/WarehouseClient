@@ -32,6 +32,7 @@ public class NotificationData implements Serializable {
 	public ReleaseData releaseData;
 	public DownloadError downloadError;
 	public ServiceMessage serviceMessage;
+	public DownloadDeleted downloadDeleted;
 	
 	transient public String description;
 	transient public String icon;
@@ -65,7 +66,7 @@ public class NotificationData implements Serializable {
 			break;
 			
 		case downloadDeleted:
-			releaseData = mapper.readValue(parser, ReleaseData.class);
+			downloadDeleted = mapper.readValue(parser, DownloadDeleted.class);
 			break;
 			
 		case serviceMessage:
@@ -99,12 +100,12 @@ public class NotificationData implements Serializable {
 			break;
 			
 		case downloadError:
-			description = "Download error in release + " + downloadError.release.name + ": " + downloadError.message;
+			description = "Download error in release + " + downloadError.release + ": " + downloadError.message;
 			icon = "download-error";
 			break;
 			
 		case downloadDeleted:
-			description = "Download deleted: " + releaseData.name;
+			description = "Download " + downloadDeleted.release + " was deleted: " + downloadDeleted.reason;
 			icon = "download-deleted";
 			break;
 			
