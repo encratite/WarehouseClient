@@ -100,7 +100,7 @@ public class NotificationData implements Serializable {
 			break;
 			
 		case downloadError:
-			description = "Download error in release + " + downloadError.release + ": " + downloadError.message;
+			description = "Download error in release " + downloadError.release + ": " + downloadError.message;
 			icon = "download-error";
 			break;
 			
