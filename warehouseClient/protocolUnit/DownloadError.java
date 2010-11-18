@@ -2,7 +2,6 @@ package warehouseClient.protocolUnit;
 
 import java.io.Serializable;
 
-
 public class DownloadError implements Serializable {
 	public String release;
 	public String message;

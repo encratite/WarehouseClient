@@ -1,6 +1,8 @@
 package warehouseClient.protocolUnit;
 
-public class DownloadDeleted {
+import java.io.Serializable;
+
+public class DownloadDeleted implements Serializable {
 	public String release;
 	public String reason;
 	
